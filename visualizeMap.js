@@ -1,9 +1,7 @@
 import {
   findClosest,
-  findRandomDestination,
   findRouteToDestination,
 } from "./uber.js";
-import * as delayed from "jsr:@jotsr/delayed";
 
 const drawScreen = ([x, y]) => {
   return Array.from(
@@ -12,14 +10,18 @@ const drawScreen = ([x, y]) => {
   );
 };
 
-const clearScreen = ([x, y], map) => {
-  map.reverse();
-  map[y][x] = "⬜️";
-  map.reverse();
+const clearScreen = (map) => {
+  console.clear();
+
+  for (let row = 0; row < map.length; row++) {
+    for (let col = 0; col < map[0].length; col++) {
+      map[row][col] = "⬜️";
+    }
+  }
 };
 
 const putScreen = (screen) => {
-  return screen.map((row) => row.join("")).join("\n");
+  return console.log(screen.map((row) => row.join("")).join("\n"));
 };
 
 const drawDriver = ([x, y], map) => {
@@ -52,25 +54,31 @@ const updateDriver = (location, driver) => {
   driver.position[1] = y;
 };
 
-const moveDriver = (driverId, drivers, map) => {
+const displayCharacters = (passengers, drivers, map) => {
+  showPassenger(passengers, map);
+  showDrivers(drivers, map);
+};
+
+const animateDriver = (nextPosition, driverId, drivers, passengers, map) => {
+  clearScreen(map);
+  updateDriver(nextPosition.value, drivers[driverId]);
+  displayCharacters(passengers, drivers, map);
+  putScreen(map);
+};
+
+const moveDriver = (driverId, drivers, passengers, map) => {
   const destination = drivers[driverId].destination;
   const origin = drivers[driverId].position;
 
   const path = findRouteToDestination(origin, destination);
   let nextPosition = path.next();
-  let lastPosition = origin;
 
   const move = setInterval(() => {
     if (nextPosition.done) {
       return clearInterval(move);
     }
 
-    console.clear();
-    console.log(putScreen(map));
-    clearScreen(lastPosition, map);
-    updateDriver(nextPosition.value, drivers[driverId])
-    drawDriver(drivers[driverId].position, map);
-    lastPosition = [...nextPosition.value];
+    animateDriver(nextPosition, driverId, drivers, passengers, map);
     nextPosition = path.next();
   }, 500);
 };
@@ -88,7 +96,7 @@ const assignDriver = (passengers, drivers, map) => {
       passenger.driver = assignedDriverId;
     }
 
-    moveDriver(assignedDriverId, drivers, map);
+    moveDriver(assignedDriverId, drivers, passengers, map);
   });
 };
 
