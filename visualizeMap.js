@@ -1,7 +1,4 @@
-import {
-  findClosest,
-  findRouteToDestination,
-} from "./uber.js";
+import { findClosest, findRouteToDestination } from "./uber.js";
 
 const drawScreen = ([x, y]) => {
   return Array.from(
@@ -54,7 +51,7 @@ const updateDriver = (location, driver) => {
   driver.position[1] = y;
 };
 
-const displayCharacters = (passengers, drivers, map) => {
+const displayCharacters = (nextPosition, passengers, drivers, map) => {
   showPassenger(passengers, map);
   showDrivers(drivers, map);
 };
@@ -62,7 +59,7 @@ const displayCharacters = (passengers, drivers, map) => {
 const animateDriver = (nextPosition, driverId, drivers, passengers, map) => {
   clearScreen(map);
   updateDriver(nextPosition.value, drivers[driverId]);
-  displayCharacters(passengers, drivers, map);
+  displayCharacters(nextPosition, passengers, drivers, map);
   putScreen(map);
 };
 
@@ -72,7 +69,6 @@ const moveDriver = (driverId, drivers, passengers, map) => {
 
   const path = findRouteToDestination(origin, destination);
   let nextPosition = path.next();
-
   const move = setInterval(() => {
     if (nextPosition.done) {
       return clearInterval(move);
@@ -86,7 +82,6 @@ const moveDriver = (driverId, drivers, passengers, map) => {
 const assignDriver = (passengers, drivers, map) => {
   passengers.forEach((passenger) => {
     let assignedDriverId = 0;
-    if (!passenger.isAssigned) {
       const freeDrivers = drivers.filter((driver) => (!driver.isAssigned));
       const assignedDriver = findClosest(passenger.position, freeDrivers);
       assignedDriverId = assignedDriver.id;
@@ -94,7 +89,6 @@ const assignDriver = (passengers, drivers, map) => {
       drivers[assignedDriverId].destination = passenger.position;
       drivers[assignedDriverId].isAssigned = true;
       passenger.driver = assignedDriverId;
-    }
 
     moveDriver(assignedDriverId, drivers, passengers, map);
   });
@@ -138,8 +132,8 @@ const createCustomers = (customerCount, screen) => {
 
 const main = (screen) => {
   const map = drawScreen(screen);
-  const passengers = createCustomers(3, screen);
-  const drivers = createDriver(5, screen);
+  const passengers = createCustomers(7, screen);
+  const drivers = createDriver(7, screen);
   showPassenger(passengers, map);
   showDrivers(drivers, map);
   assignDriver(passengers, drivers, map);
