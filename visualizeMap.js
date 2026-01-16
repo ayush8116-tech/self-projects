@@ -3,7 +3,8 @@ import { findClosest, findRouteToDestination } from "./uber.js";
 const drawScreen = ([x, y]) => {
   return Array.from(
     { length: x + 1 },
-    () => Array.from({ length: y + 1 }, () => "⬜️"),
+    () =>
+      Array.from({ length: y + 1 }, () => ({ block: "⬜️", isClear: false })),
   );
 };
 
@@ -18,30 +19,26 @@ const clearScreen = (map) => {
 };
 
 const putScreen = (screen) => {
-  return console.log(screen.map((row) => row.join("")).join("\n"));
+  const screenBlock = screen.map((row) => row.map(({ block }) => block));
+
+  return console.log(screenBlock.map((row) => row.join("")).join("\n"));
 };
 
-const drawDriver = ([x, y], map) => {
+const drawObject = ([x, y], object, map) => {
   map.reverse();
-  map[y][x] = "🚖";
+  map[y][x]["block"] = object;
   map.reverse();
 };
 
 const showDrivers = (drivers, map) => {
   drivers.forEach((driver) => {
-    drawDriver(driver.position, map);
+    drawObject(driver.position, "🚖", map);
   });
-};
-
-const drawPassenger = ([x, y], map) => {
-  map.reverse();
-  map[y][x] = "👱‍♂️";
-  map.reverse();
 };
 
 const showPassenger = (passengers, map) => {
   passengers.forEach((passenger) => {
-    drawPassenger(passenger.position, map);
+    drawObject(passenger.position, "👱‍♂️", map);
   });
 };
 
@@ -51,7 +48,14 @@ const updateDriver = (location, driver) => {
   driver.position[1] = y;
 };
 
-const displayCharacters = (nextPosition, passengers, drivers, map) => {
+const createRoad = (locations, screen) => {
+  locations.forEach(([x, y]) => {
+    screen[y][x]["block"] = "⬛️";
+    screen[y][x]["isClear"] = true;
+  });
+};
+
+const displayCharacters = (passengers, drivers, map) => {
   showPassenger(passengers, map);
   showDrivers(drivers, map);
 };
@@ -59,7 +63,7 @@ const displayCharacters = (nextPosition, passengers, drivers, map) => {
 const animateDriver = (nextPosition, driverId, drivers, passengers, map) => {
   clearScreen(map);
   updateDriver(nextPosition.value, drivers[driverId]);
-  displayCharacters(nextPosition, passengers, drivers, map);
+  displayCharacters(passengers, drivers, map);
   putScreen(map);
 };
 
@@ -82,13 +86,13 @@ const moveDriver = (driverId, drivers, passengers, map) => {
 const assignDriver = (passengers, drivers, map) => {
   passengers.forEach((passenger) => {
     let assignedDriverId = 0;
-      const freeDrivers = drivers.filter((driver) => (!driver.isAssigned));
-      const assignedDriver = findClosest(passenger.position, freeDrivers);
-      assignedDriverId = assignedDriver.id;
+    const freeDrivers = drivers.filter((driver) => (!driver.isAssigned));
+    const assignedDriver = findClosest(passenger.position, freeDrivers);
+    assignedDriverId = assignedDriver.id;
 
-      drivers[assignedDriverId].destination = passenger.position;
-      drivers[assignedDriverId].isAssigned = true;
-      passenger.driver = assignedDriverId;
+    drivers[assignedDriverId].destination = passenger.position;
+    drivers[assignedDriverId].isAssigned = true;
+    passenger.driver = assignedDriverId;
 
     moveDriver(assignedDriverId, drivers, passengers, map);
   });
@@ -105,39 +109,42 @@ const generateRandomPosition = (map) => {
 };
 
 const createDriver = (driverCount, screen) => {
-  const drivers = Array.from({ length: driverCount }).map((_, index) => {
-    const detail = {
-      id: index,
-      position: generateRandomPosition(screen),
-      destination: generateRandomPosition(screen),
-      isAssigned: false,
-    };
-    return detail;
-  });
-  return drivers;
+  let index = 0
+  const drivers = Array.from({ length: driverCount }, () => ({
+    id: index++,
+    position: generateRandomPosition(screen),
+    destination: generateRandomPosition(screen),
+    isAssigned: false,
+  }))
+
+  return drivers
 };
 
 const createCustomers = (customerCount, screen) => {
-  const customers = Array.from({ length: customerCount }).map((_) => {
-    const detail = {
-      position: generateRandomPosition(screen),
-      driver: null,
-      isAssigned: false,
-    };
-    return detail;
-  });
+  const customers = Array.from({ length: customerCount }, () => ({
+    position: generateRandomPosition(screen),
+    driver: null,
+    isAssigned: false,
+  }));
 
   return customers;
 };
 
 const main = (screen) => {
   const map = drawScreen(screen);
-  const passengers = createCustomers(7, screen);
-  const drivers = createDriver(7, screen);
+  // console.log(map);
+
+  const passengers = createCustomers(1, screen);
+  const drivers = createDriver(5, screen);
+  const road = createRoad([[10, 10], [10, 11], [10, 12], [10, 13]], map);
+
   showPassenger(passengers, map);
+
   showDrivers(drivers, map);
-  assignDriver(passengers, drivers, map);
+  // assignDriver(passengers, drivers, map);
+  // console.log(map);
   console.log(putScreen(map));
+  return map
 };
 
 console.clear();

@@ -1,15 +1,13 @@
-// const isDestClear = ([x, y], screen) => {
-//   return (x <= screen[0] && x >= 0) && (y <= screen[1] && y >= 0)
-// }
-
 const generateRandom = ([xMax, yMax]) => {
   const x = Math.floor(Math.random() * 1000) % (xMax + 1);
   const y = Math.floor(Math.random() * 1000) % (yMax + 1);
+
   return [x, y];
 };
 
 export const findRandomDestination = (screen) => {
   const randomCoordinate = generateRandom(screen);
+
   return randomCoordinate;
 };
 
@@ -57,15 +55,14 @@ export const findDistance = (p, d) => {
 };
 
 export const findClosest = (passenger, drivers) => {
-  
   const driverToAssign = drivers.reduce((closestDriver, driver) => {
     const closestDistance = findDistance(passenger, closestDriver.position);
-    const distanceBetween = findDistance(passenger, driver.position)
+    const distanceBetween = findDistance(passenger, driver.position);
 
     return closestDistance > distanceBetween ? driver : closestDriver;
-  })
+  });
 
-  return {id : driverToAssign.id, bookingId : driverToAssign.bookingId}
+  return { id: driverToAssign.id, bookingId: driverToAssign.bookingId };
 };
 
 export const main = () => {
